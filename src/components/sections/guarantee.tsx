@@ -103,8 +103,7 @@ export const Guarantee = () => {
   return (
     <section
       ref={sectionRef}
-      className="relative bg-white dark:bg-dark-bg py-24"
-      style={{ minHeight: window.innerWidth < 768 ? `${steps.length * 120}vh` : `${steps.length * 80}vh` }}
+      className="relative bg-white dark:bg-dark-bg py-24 min-h-[360vh] md:min-h-[240vh]"
     >
       {/* Header */}
       <div className="max-w-7xl mx-auto px-4 mb-16 text-center">
