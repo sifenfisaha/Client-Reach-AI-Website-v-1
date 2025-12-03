@@ -1,66 +1,96 @@
-import React from 'react';
+"use client";
+
+import { useState } from 'react';
+import { Mail, ArrowRight, CheckCircle2, Loader2 } from 'lucide-react';
+import { FadeIn } from '@/components/ui/fade-in';
 
 export default function NewsletterPage() {
+  const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    // Simulate API call
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    setLoading(false);
+    setSubmitted(true);
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-dark-bg px-4 py-24">
-      <div className="max-w-xl w-full bg-white dark:bg-dark-card p-8 md:p-12 rounded-3xl shadow-xl border border-gray-100 dark:border-dark-border">
-        <div className="text-center mb-10">
-            <span className="inline-block px-3 py-1 bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400 rounded-full text-xs font-bold tracking-wide uppercase mb-4">
-                Weekly AI Insider
-            </span>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                Stay Ahead of the Curve
+      <div className="max-w-3xl mx-auto px-4 py-24">
+        <FadeIn>
+          <div className="text-center mb-12">
+            <div className="w-16 h-16 bg-brand-100 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400 rounded-2xl flex items-center justify-center mx-auto mb-6 transform rotate-3">
+              <Mail size={32} />
+            </div>
+            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-6">
+              Join the Inner Circle
             </h1>
-            <p className="text-gray-500 dark:text-gray-400">
-                Join 2,000+ clinic owners leveraging AI for growth.
+            <p className="text-xl text-gray-600 dark:text-gray-300 leading-relaxed">
+              Get exclusive insights on how top clinics are using AI to automate growth, recover revenue, and save time. No spam, just value.
             </p>
-        </div>
+          </div>
 
-        <form className="space-y-5">
-            <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Full Name <span className="text-red-500">*</span></label>
-                <input type="text" required className="w-full px-4 py-3 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-brand-500 outline-none transition-all" placeholder="John Doe" />
-            </div>
-            
-            <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Business Name <span className="text-red-500">*</span></label>
-                <input type="text" required className="w-full px-4 py-3 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-brand-500 outline-none transition-all" placeholder="Your Clinic Name" />
-            </div>
+          <div className="bg-white dark:bg-dark-card rounded-3xl p-8 md:p-12 shadow-xl border border-gray-100 dark:border-dark-border relative overflow-hidden">
+            {/* Background decoration */}
+            <div className="absolute top-0 right-0 w-64 h-64 bg-brand-50 dark:bg-brand-900/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
 
-            <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email <span className="text-red-500">*</span></label>
-                <input type="email" required className="w-full px-4 py-3 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-brand-500 outline-none transition-all" placeholder="john@clinic.com" />
-            </div>
-
-            <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Phone <span className="text-red-500">*</span></label>
-                <input type="tel" required className="w-full px-4 py-3 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-brand-500 outline-none transition-all" placeholder="+1 (555) 000-0000" />
-            </div>
-
-            <div className="space-y-4 pt-4 border-t border-gray-100 dark:border-gray-800 mt-6">
-                <label className="flex items-start gap-3 cursor-pointer group">
-                    <input type="checkbox" className="mt-1 w-4 h-4 text-brand-500 border-gray-300 rounded focus:ring-brand-500 shrink-0" />
-                    <span className="text-[10px] md:text-xs text-gray-500 dark:text-gray-400 leading-relaxed group-hover:text-gray-800 dark:group-hover:text-gray-200 transition-colors">
-                        By checking this box, I consent to receive transactional messages related to my account, orders, or services I have requested. These messages may include appointment reminders, order confirmations, and account notifications among others. Message frequency may vary. Message & Data rates may apply. Reply HELP for help or STOP to opt-out.
-                    </span>
-                </label>
-                <label className="flex items-start gap-3 cursor-pointer group">
-                    <input type="checkbox" className="mt-1 w-4 h-4 text-brand-500 border-gray-300 rounded focus:ring-brand-500 shrink-0" />
-                    <span className="text-[10px] md:text-xs text-gray-500 dark:text-gray-400 leading-relaxed group-hover:text-gray-800 dark:group-hover:text-gray-200 transition-colors">
-                        By checking this box, I consent to receive marketing and promotional messages, including special offers, discounts, new product updates among others. Message frequency may vary. Message & Data rates may apply. Reply HELP for help or STOP to opt-out.
-                    </span>
-                </label>
-            </div>
-
-            <button type="submit" className="w-full py-3.5 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-lg transition-all shadow-lg shadow-brand-500/20 mt-6">
-                Subscribe Now
-            </button>
-            <div className="text-center">
-                <p className="text-xs text-gray-400 dark:text-gray-500">
-                    Privacy Policy | Terms of Service
+            {submitted ? (
+              <div className="text-center py-12">
+                <div className="w-20 h-20 bg-green-100 text-green-500 rounded-full flex items-center justify-center mx-auto mb-6 animate-bounce">
+                  <CheckCircle2 size={40} />
+                </div>
+                <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">You're on the list!</h2>
+                <p className="text-gray-600 dark:text-gray-400 text-lg">
+                  Thanks for subscribing. Keep an eye on your inbox for our next update.
                 </p>
-            </div>
-        </form>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit} className="space-y-6 relative z-10">
+                <div>
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Email Address
+                  </label>
+                  <div className="relative">
+                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                    <input
+                      type="email"
+                      id="email"
+                      required
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="w-full pl-12 pr-4 py-4 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-brand-500 outline-none transition-all text-lg"
+                      placeholder="doctor@clinic.com"
+                    />
+                  </div>
+                </div>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full py-4 bg-brand-500 hover:bg-brand-600 text-white font-bold text-lg rounded-xl transition-all shadow-lg shadow-brand-500/20 flex items-center justify-center gap-2 group"
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 size={24} className="animate-spin" />
+                      <span>Subscribing...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Subscribe Now</span>
+                      <ArrowRight size={24} className="group-hover:translate-x-1 transition-transform" />
+                    </>
+                  )}
+                </button>
+                <p className="text-center text-sm text-gray-500 dark:text-gray-400">
+                  Join 2,000+ clinic owners. Unsubscribe at any time.
+                </p>
+              </form>
+            )}
+          </div>
+        </FadeIn>
       </div>
     </div>
   );
