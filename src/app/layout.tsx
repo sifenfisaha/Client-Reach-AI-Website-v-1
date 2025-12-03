@@ -1,5 +1,6 @@
 import React from "react";
 import type { Metadata } from "next";
+import Script from "next/script";
 import "./globals.css";
 import { ThemeProvider } from "@/contexts/theme-context";
 
@@ -24,6 +25,16 @@ export default function RootLayout({
       </head>
       <body className="bg-white dark:bg-dark-bg text-slate-900 dark:text-slate-100 transition-colors duration-300 antialiased selection:bg-brand-500 selection:text-white">
         <ThemeProvider>{children}</ThemeProvider>
+        
+        {/* Chat Widget */}
+        <Script
+          src="/chat-widget.js"
+          strategy="lazyOnload"
+          data-name="Reach"
+          data-primary="#14A3F6"
+          data-welcome="👋 Have any questions?"
+          data-endpoint="https://api.clientreach.ai/chat"
+        />
       </body>
     </html>
   );

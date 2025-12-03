@@ -1,4 +1,3 @@
-
 ## Run Locally (Next.js + Tailwind)
 
 **Prerequisites:** Node.js and pnpm
