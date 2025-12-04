@@ -40,7 +40,7 @@ export default function RootLayout({
           data-name="Reach"
           data-primary="#14A3F6"
           data-welcome="👋 Have any questions?"
-          data-endpoint="https://api.clientreach.ai/chat"
+          data-endpoint="/api/chat"
         />
       </body>
     </html>

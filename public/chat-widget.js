@@ -5,31 +5,42 @@
  */
 
 (function () {
-  'use strict';
+  "use strict";
 
   // Get configuration from script tag
   const script = document.currentScript;
   const config = {
-    name: script?.getAttribute('data-name') || 'AI',
-    primary: script?.getAttribute('data-primary') || '#14A3F6',
-    welcome: script?.getAttribute('data-welcome') || 'Have any questions?',
-    endpoint: script?.getAttribute('data-endpoint') || 'https://your-endpoint-here.com/chat',
+    name: script?.getAttribute("data-name") || "AI",
+    primary: script?.getAttribute("data-primary") || "#14A3F6",
+    welcome: script?.getAttribute("data-welcome") || "Have any questions?",
+    endpoint:
+      script?.getAttribute("data-endpoint") ||
+      "https://your-endpoint-here.com/chat",
   };
 
   // Detect theme (dark mode) - check website theme first, then system
   const isDarkMode = () => {
     // Check if website has dark class on html or body
-    const htmlDark = document.documentElement.classList.contains('dark');
-    const bodyDark = document.body?.classList.contains('dark');
-    
+    const htmlDark = document.documentElement.classList.contains("dark");
+    const bodyDark = document.body?.classList.contains("dark");
+
     if (htmlDark || bodyDark) {
-      console.log('[ClientReach Widget] Dark mode detected from website class');
+      console.log("[ClientReach Widget] Dark mode detected from website class");
       return true;
     }
-    
+
     // Fall back to system preference
-    const systemDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-    console.log('[ClientReach Widget] Theme detection - HTML dark:', htmlDark, '| Body dark:', bodyDark, '| System dark:', systemDark);
+    const systemDark =
+      window.matchMedia &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches;
+    console.log(
+      "[ClientReach Widget] Theme detection - HTML dark:",
+      htmlDark,
+      "| Body dark:",
+      bodyDark,
+      "| System dark:",
+      systemDark
+    );
     return systemDark;
   };
 
@@ -37,33 +48,33 @@
   const getTheme = () => {
     const dark = isDarkMode();
     return {
-      bg: dark ? '#1a1a1a' : '#ffffff',
-      text: dark ? '#e5e5e5' : '#1a1a1a',
-      border: dark ? '#333333' : '#e5e5e5',
-      inputBg: dark ? '#2a2a2a' : '#f5f5f5',
+      bg: dark ? "#1a1a1a" : "#ffffff",
+      text: dark ? "#e5e5e5" : "#1a1a1a",
+      border: dark ? "#333333" : "#e5e5e5",
+      inputBg: dark ? "#2a2a2a" : "#f5f5f5",
       userBubble: config.primary,
-      botBubble: dark ? '#2a2a2a' : '#f0f0f0',
-      botText: dark ? '#e5e5e5' : '#1a1a1a',
-      shadow: dark ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.1)',
+      botBubble: dark ? "#2a2a2a" : "#f0f0f0",
+      botText: dark ? "#e5e5e5" : "#1a1a1a",
+      shadow: dark ? "rgba(0,0,0,0.5)" : "rgba(0,0,0,0.1)",
     };
   };
 
   // Create widget container
-  const container = document.createElement('div');
-  container.id = 'clientreach-chat-widget';
+  const container = document.createElement("div");
+  container.id = "clientreach-chat-widget";
   document.body.appendChild(container);
 
   // Inject styles
   const injectStyles = () => {
     // Remove any existing widget styles first
-    const existingStyle = document.getElementById('cr-widget-styles');
+    const existingStyle = document.getElementById("cr-widget-styles");
     if (existingStyle) {
       existingStyle.remove();
     }
 
     const theme = getTheme();
-    const style = document.createElement('style');
-    style.id = 'cr-widget-styles'; // Add unique ID
+    const style = document.createElement("style");
+    style.id = "cr-widget-styles"; // Add unique ID
     style.textContent = `
       #clientreach-chat-widget {
         position: fixed;
@@ -211,8 +222,45 @@
         padding: 12px 16px;
         border-radius: 16px;
         font-size: 14px;
-        line-height: 1.5;
+        line-height: 1.6;
         word-wrap: break-word;
+      }
+
+      .cr-message-bubble p {
+        margin: 0 0 14px 0;
+        padding: 0;
+        line-height: 1.7;
+      }
+
+      .cr-message-bubble p:last-child {
+        margin-bottom: 0;
+      }
+
+      .cr-message-bubble p:first-child {
+        margin-top: 0;
+      }
+
+      .cr-message-bubble br {
+        line-height: 1.8;
+      }
+
+      .cr-message-bubble .cr-list-item {
+        margin: 10px 0;
+        line-height: 1.7;
+        padding-left: 4px;
+      }
+
+      .cr-message-bubble .cr-list-item:first-child {
+        margin-top: 4px;
+      }
+
+      .cr-message-bubble .cr-list-item:last-child {
+        margin-bottom: 4px;
+      }
+
+      .cr-message-bubble p + .cr-list-item,
+      .cr-message-bubble .cr-list-item + p {
+        margin-top: 12px;
       }
 
       .cr-message.user .cr-message-bubble {
@@ -437,36 +485,66 @@
   // Widget state
   let isOpen = false;
   let isTyping = false;
+  let conversationHistory = [];
 
   // DOM elements
-  let chatBtn, chatWindow, closeBtn, messagesContainer, input, sendBtn, welcomeBubble;
+  let chatBtn,
+    chatWindow,
+    closeBtn,
+    messagesContainer,
+    input,
+    sendBtn,
+    welcomeBubble;
 
   // Initialize DOM references
   const initElements = () => {
-    chatBtn = document.getElementById('cr-chat-btn');
-    chatWindow = document.getElementById('cr-chat-window');
-    closeBtn = document.getElementById('cr-close-btn');
-    messagesContainer = document.getElementById('cr-messages');
-    input = document.getElementById('cr-input');
-    sendBtn = document.getElementById('cr-send-btn');
-    welcomeBubble = document.getElementById('cr-welcome');
+    chatBtn = document.getElementById("cr-chat-btn");
+    chatWindow = document.getElementById("cr-chat-window");
+    closeBtn = document.getElementById("cr-close-btn");
+    messagesContainer = document.getElementById("cr-messages");
+    input = document.getElementById("cr-input");
+    sendBtn = document.getElementById("cr-send-btn");
+    welcomeBubble = document.getElementById("cr-welcome");
   };
 
   // Add user message
   const addUserMessage = (text) => {
-    const messageEl = document.createElement('div');
-    messageEl.className = 'cr-message user';
-    messageEl.innerHTML = `<div class="cr-message-bubble">${escapeHtml(text)}</div>`;
+    const messageEl = document.createElement("div");
+    messageEl.className = "cr-message user";
+    messageEl.innerHTML = `<div class="cr-message-bubble">${escapeHtml(
+      text
+    )}</div>`;
     messagesContainer.appendChild(messageEl);
     scrollToBottom();
   };
 
   // Add bot message
-  const addBotMessage = (text) => {
-    const messageEl = document.createElement('div');
-    messageEl.className = 'cr-message bot';
-    messageEl.innerHTML = `<div class="cr-message-bubble">${escapeHtml(text)}</div>`;
-    messagesContainer.appendChild(messageEl);
+  const addBotMessage = (text, isStreaming = false) => {
+    // Check if there's already a streaming message element
+    let messageEl = document.getElementById("cr-streaming-message");
+
+    if (!messageEl) {
+      // Create new message element
+      messageEl = document.createElement("div");
+      messageEl.className = "cr-message bot";
+      messageEl.id = "cr-streaming-message";
+      const formattedText = formatBotMessage(text);
+      messageEl.innerHTML = `<div class="cr-message-bubble">${formattedText}</div>`;
+      messagesContainer.appendChild(messageEl);
+    } else {
+      // Update existing streaming message
+      const bubble = messageEl.querySelector(".cr-message-bubble");
+      if (bubble) {
+        const formattedText = formatBotMessage(text);
+        bubble.innerHTML = formattedText;
+      }
+    }
+
+    // If streaming is complete, remove the ID so next message creates a new element
+    if (!isStreaming) {
+      messageEl.removeAttribute("id");
+    }
+
     scrollToBottom();
   };
 
@@ -474,9 +552,9 @@
   const showTyping = () => {
     if (isTyping) return;
     isTyping = true;
-    const typingEl = document.createElement('div');
-    typingEl.className = 'cr-message bot';
-    typingEl.id = 'cr-typing-indicator';
+    const typingEl = document.createElement("div");
+    typingEl.className = "cr-message bot";
+    typingEl.id = "cr-typing-indicator";
     typingEl.innerHTML = `
       <div class="cr-message-bubble cr-typing">
         <span></span><span></span><span></span>
@@ -489,7 +567,7 @@
   // Hide typing indicator
   const hideTyping = () => {
     isTyping = false;
-    const typingEl = document.getElementById('cr-typing-indicator');
+    const typingEl = document.getElementById("cr-typing-indicator");
     if (typingEl) typingEl.remove();
   };
 
@@ -502,31 +580,389 @@
 
   // Escape HTML
   const escapeHtml = (text) => {
-    const div = document.createElement('div');
+    const div = document.createElement("div");
     div.textContent = text;
     return div.innerHTML;
   };
 
-  // Send message to API
-  const sendMessage = async (message) => {
-    try {
-      const response = await fetch(config.endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ message }),
-      });
+  // Format bot message text - convert markdown-like formatting to readable text
+  const formatBotMessage = (text) => {
+    if (!text) return "";
 
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
+    // First escape HTML to prevent XSS
+    text = escapeHtml(text);
+
+    // Remove markdown headers (###, ##, #) - but keep the text
+    text = text.replace(/^#{1,6}\s+/gm, "");
+
+    // Remove markdown bold (**text** or __text__)
+    text = text.replace(/\*\*(.*?)\*\*/g, "$1");
+    text = text.replace(/__(.*?)__/g, "$1");
+
+    // Normalize line endings
+    text = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+
+    // UNIVERSAL: Detect and split numbered items that are on the same line
+    // Pattern: "1. Item: description2. Item: description" -> split into separate lines
+    text = text.replace(/(\d+\.\s+[^0-9\n]+?)(?=\s*\d+\.\s+)/g, "$1\n\n");
+
+    // Also handle cases where numbered items are separated by text without line breaks
+    // Pattern: "text1. Item: description2. Item:" -> add line breaks
+    text = text.replace(/([^\n])(\d+\.\s+)/g, "$1\n\n$2");
+
+    // UNIVERSAL: Detect and split numbered items that appear together
+    // More comprehensive pattern matching
+    text = text.replace(/(\d+\.\s+[^0-9\n]{10,}?)(?=\d+\.\s+)/g, "$1\n\n");
+
+    // UNIVERSAL: Detect patterns like "Concept: descriptionConcept:" and split them
+    // Pattern: "Sales AI Agents: descriptionSupport AI Agents:" -> split
+    text = text.replace(
+      /([A-Z][^:]{5,}:\s+[^:\n]{10,}?)(?=[A-Z][^:]{5,}:\s+)/g,
+      "$1\n\n"
+    );
+
+    // UNIVERSAL: Add line breaks after sentences ending with periods/exclamation/question marks
+    // But be smart - don't break on abbreviations or decimals
+    text = text.replace(/([.!?])\s+([A-Z][a-z])/g, "$1\n\n$2");
+
+    // Split into lines for processing
+    const lines = text.split("\n");
+    const processedLines = [];
+    let previousWasListItem = false;
+    let previousWasEmpty = false;
+
+    for (let i = 0; i < lines.length; i++) {
+      let line = lines[i];
+      const trimmedLine = line.trim();
+
+      // Handle empty lines - preserve for spacing
+      if (!trimmedLine) {
+        if (previousWasListItem && !previousWasEmpty) {
+          processedLines.push(""); // Add spacing after list
+        }
+        previousWasEmpty = true;
+        previousWasListItem = false;
+        continue;
       }
 
-      const data = await response.json();
-      return data.reply || 'Sorry, I didn\'t understand that.';
+      previousWasEmpty = false;
+
+      // Check if this is a list item (at start of line or after text)
+      const isBulletList = /^[-*]\s+/.test(trimmedLine);
+      // More flexible numbered list detection - can be anywhere in line
+      const hasNumberedItem = /(\d+\.\s+[^0-9\n]+)/.test(trimmedLine);
+      const isNumberedList = /^\d+\.\s+/.test(trimmedLine);
+      const isListItem = isBulletList || isNumberedList;
+
+      // If line contains numbered item but doesn't start with it, split it
+      if (hasNumberedItem && !isNumberedList) {
+        // Split on numbered items
+        const parts = trimmedLine.split(/(\d+\.\s+)/);
+        let currentPart = "";
+        for (let j = 0; j < parts.length; j++) {
+          if (/^\d+\.\s+$/.test(parts[j])) {
+            // This is a number prefix
+            if (currentPart) {
+              processedLines.push(currentPart.trim());
+              currentPart = "";
+            }
+            currentPart = parts[j];
+          } else if (currentPart && /^\d+\.\s+/.test(currentPart)) {
+            // Continue the numbered item
+            currentPart += parts[j];
+            processedLines.push(currentPart.trim());
+            currentPart = "";
+          } else {
+            currentPart += parts[j];
+          }
+        }
+        if (currentPart) {
+          processedLines.push(currentPart.trim());
+        }
+        previousWasListItem = true;
+        continue;
+      }
+
+      if (isListItem) {
+        // Add spacing before list if previous wasn't a list item
+        if (!previousWasListItem && processedLines.length > 0) {
+          processedLines.push("");
+        }
+
+        // Convert to clean format
+        if (isBulletList) {
+          line = trimmedLine.replace(/^[-*]\s+/, "• ");
+        } else if (isNumberedList) {
+          line = trimmedLine.replace(/^(\d+)\.\s+/, "$1. ");
+        }
+        processedLines.push(line);
+        previousWasListItem = true;
+      } else {
+        // Regular text line
+        if (previousWasListItem) {
+          processedLines.push(""); // Add spacing after list
+        }
+
+        // Clean up extra spaces
+        line = trimmedLine.replace(/\s+/g, " ");
+        processedLines.push(line);
+        previousWasListItem = false;
+      }
+    }
+
+    // Join lines with double line breaks for paragraph separation
+    let result = processedLines.join("\n");
+
+    // UNIVERSAL: Ensure proper spacing - add line breaks where needed
+    // This is applied AFTER initial processing to catch any missed patterns
+
+    // Add spacing after periods that end sentences (but not in the middle of URLs or numbers)
+    result = result.replace(/([.!?])\s+([A-Z][a-z])/g, "$1\n\n$2");
+
+    // Ensure numbered items always have spacing
+    result = result.replace(/(\d+\.\s+[^\n]+?)(?=\d+\.\s+)/g, "$1\n\n");
+
+    // Split by double line breaks to get paragraphs/sections
+    const sections = result.split(/\n\n+/).filter((s) => s.trim().length > 0);
+
+    if (sections.length === 0) return "";
+
+    // Process each section
+    const formattedSections = sections
+      .map((section) => {
+        section = section.trim();
+        if (!section) return null;
+
+        const sectionLines = section
+          .split("\n")
+          .filter((l) => l.trim().length > 0);
+
+        // Check if section contains list items
+        const hasListItems = sectionLines.some((line) =>
+          /^[•\d]\.\s/.test(line.trim())
+        );
+
+        if (hasListItems) {
+          // Format as list with proper spacing
+          const formattedItems = [];
+          let previousWasListItem = false;
+
+          sectionLines.forEach((line) => {
+            line = line.trim();
+            if (!line) return;
+
+            const isListItem = /^[•\d]\.\s/.test(line);
+
+            if (isListItem) {
+              // Add spacing before list item if previous wasn't a list item
+              if (!previousWasListItem && formattedItems.length > 0) {
+                formattedItems.push("");
+              }
+              formattedItems.push(`<div class="cr-list-item">${line}</div>`);
+              previousWasListItem = true;
+            } else {
+              // Regular text - add spacing if previous was list item
+              if (previousWasListItem) {
+                formattedItems.push("");
+              }
+              formattedItems.push(`<p>${line}</p>`);
+              previousWasListItem = false;
+            }
+          });
+
+          return formattedItems.join("");
+        } else {
+          // Regular paragraph - but check if it contains multiple sentences that should be separated
+          let paragraphText = sectionLines
+            .join(" ")
+            .replace(/\s+/g, " ")
+            .trim();
+
+          // If paragraph is very long (over 200 chars), try to break it into smaller paragraphs
+          if (paragraphText.length > 200) {
+            // Split on sentence endings
+            const sentences = paragraphText.split(/([.!?]\s+)/);
+            const formattedSentences = [];
+            let currentGroup = "";
+
+            for (let i = 0; i < sentences.length; i++) {
+              currentGroup += sentences[i];
+              // Group 2-3 sentences together, then break
+              if (currentGroup.length > 150 && /[.!?]\s*$/.test(currentGroup)) {
+                formattedSentences.push(currentGroup.trim());
+                currentGroup = "";
+              }
+            }
+            if (currentGroup) {
+              formattedSentences.push(currentGroup.trim());
+            }
+
+            if (formattedSentences.length > 1) {
+              return formattedSentences.map((s) => `<p>${s}</p>`).join("");
+            }
+          }
+
+          return `<p>${paragraphText}</p>`;
+        }
+      })
+      .filter((s) => s && s.length > 0);
+
+    return formattedSections.join("");
+  };
+
+  // Send message to API with streaming support
+  const sendMessage = async (message) => {
+    try {
+      // Add user message to conversation history
+      conversationHistory.push({
+        role: "user",
+        content: message,
+      });
+
+      // Log what we're sending
+      console.log("📤 Sending to API:", {
+        endpoint: config.endpoint,
+        messages: conversationHistory,
+        messagesCount: conversationHistory.length,
+        lastMessage: conversationHistory[conversationHistory.length - 1],
+      });
+
+      const requestBody = {
+        messages: conversationHistory,
+      };
+
+      console.log("📤 Request body:", JSON.stringify(requestBody, null, 2));
+
+      const response = await fetch(config.endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      console.log("📥 Response status:", response.status, response.statusText);
+
+      if (!response.ok) {
+        // Try to get error details from response
+        let errorMessage = "Network response was not ok";
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorData.details || errorMessage;
+          console.error("API Error Response:", errorData);
+        } catch (e) {
+          console.error(
+            "API Error Status:",
+            response.status,
+            response.statusText
+          );
+        }
+        throw new Error(errorMessage);
+      }
+
+      // Check if response is streaming (text/event-stream, application/x-ndjson, or text/plain)
+      const contentType = response.headers.get("content-type") || "";
+      const isStreaming =
+        contentType.includes("text/event-stream") ||
+        contentType.includes("application/x-ndjson") ||
+        contentType.includes("text/plain") ||
+        contentType.includes("text/");
+
+      if (isStreaming) {
+        // Handle streaming response (Vercel AI SDK format)
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let fullText = "";
+        let buffer = "";
+
+        // Hide typing indicator since we're streaming
+        hideTyping();
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split("\n");
+          buffer = lines.pop() || ""; // Keep incomplete line in buffer
+
+          for (const line of lines) {
+            if (!line.trim()) continue;
+
+            // Try to parse as data stream format first (for compatibility)
+            let textChunk = null;
+
+            // Vercel AI SDK data stream format: "0: {...}" or "1: {...}"
+            if (/^\d+:/.test(line)) {
+              try {
+                const colonIndex = line.indexOf(":");
+                const data = JSON.parse(line.slice(colonIndex + 1));
+                if (data.type === "text-delta" && data.textDelta) {
+                  textChunk = data.textDelta;
+                } else if (data.type === "finish") {
+                  break;
+                }
+              } catch (e) {
+                // Not JSON, treat as plain text
+                textChunk = line;
+              }
+            }
+            // SSE format: "data: {...}"
+            else if (line.startsWith("data: ")) {
+              try {
+                const data = JSON.parse(line.slice(6));
+                if (data.type === "text-delta" && data.textDelta) {
+                  textChunk = data.textDelta;
+                } else if (data.type === "finish") {
+                  break;
+                }
+              } catch (e) {
+                textChunk = line;
+              }
+            }
+            // Plain text chunk (toTextStreamResponse format)
+            else {
+              textChunk = line;
+            }
+
+            // Append text chunk if found
+            if (textChunk) {
+              fullText += textChunk;
+              addBotMessage(fullText, true);
+            }
+          }
+        }
+
+        // Add assistant message to conversation history
+        conversationHistory.push({
+          role: "assistant",
+          content: fullText,
+        });
+
+        // Finalize the message (remove streaming flag)
+        addBotMessage(fullText, false);
+        return fullText;
+      } else {
+        // Fallback: handle non-streaming response
+        const data = await response.json();
+        const reply =
+          data.reply || data.text || "Sorry, I didn't understand that.";
+
+        // Add assistant message to conversation history
+        conversationHistory.push({
+          role: "assistant",
+          content: reply,
+        });
+
+        return reply;
+      }
     } catch (error) {
-      console.error('Chat widget error:', error);
-      return 'Sorry, I\'m having trouble connecting. Please try again later.';
+      console.error("Chat widget error:", error);
+      const errorMessage =
+        error.message ||
+        "Sorry, I'm having trouble connecting. Please try again later.";
+      // Return error message so it can be displayed to user
+      return errorMessage;
     }
   };
 
@@ -535,58 +971,85 @@
     const message = input.value.trim();
     if (!message || isTyping) return;
 
-    // Add user message
+    // Add user message to UI
     addUserMessage(message);
-    input.value = '';
+    input.value = "";
     sendBtn.disabled = true;
 
-    // Show typing
+    // Show typing indicator
     showTyping();
 
-    // Send to API
-    const reply = await sendMessage(message);
+    try {
+      // Send to API (handles streaming internally)
+      const reply = await sendMessage(message);
 
-    // Hide typing and show reply
-    hideTyping();
-    addBotMessage(reply);
-    sendBtn.disabled = false;
-    input.focus();
+      // If sendMessage returns a string (error case), display it
+      if (reply && typeof reply === "string" && !isTyping) {
+        // Check if this is an error message (not a successful response)
+        // If streaming worked, reply will be the full text and we don't need to add it again
+        // But if it's an error, we need to display it
+        if (
+          reply.includes("error") ||
+          reply.includes("trouble") ||
+          reply.includes("Sorry")
+        ) {
+          addBotMessage(reply, false);
+        }
+      }
+    } catch (error) {
+      console.error("Error sending message:", error);
+      const errorMsg =
+        error.message ||
+        "Sorry, I'm having trouble connecting. Please try again later.";
+      addBotMessage(errorMsg, false);
+    } finally {
+      // Hide typing indicator
+      hideTyping();
+      sendBtn.disabled = false;
+      input.focus();
+    }
   };
 
   // Toggle chat window
   const toggleChat = () => {
     isOpen = !isOpen;
     if (isOpen) {
-      chatWindow.classList.remove('cr-hidden');
-      welcomeBubble.classList.add('cr-hidden');
+      chatWindow.classList.remove("cr-hidden");
+      welcomeBubble.classList.add("cr-hidden");
       input.focus();
-      
+
       // Send initial greeting if no messages
       if (messagesContainer.children.length === 0) {
         setTimeout(() => {
-          addBotMessage(`Hi! I'm ${config.name}, your AI assistant. How can I help you today?`);
+          const greeting = `Hi! I'm ${config.name}, your AI assistant. How can I help you today?`;
+          addBotMessage(greeting, false);
+          // Add greeting to conversation history
+          conversationHistory.push({
+            role: "assistant",
+            content: greeting,
+          });
         }, 300);
       }
     } else {
-      chatWindow.classList.add('cr-hidden');
+      chatWindow.classList.add("cr-hidden");
     }
   };
 
   // Event listeners
   const attachEvents = () => {
-    chatBtn.addEventListener('click', toggleChat);
-    closeBtn.addEventListener('click', toggleChat);
-    sendBtn.addEventListener('click', handleSend);
-    
-    input.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') {
+    chatBtn.addEventListener("click", toggleChat);
+    closeBtn.addEventListener("click", toggleChat);
+    sendBtn.addEventListener("click", handleSend);
+
+    input.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") {
         handleSend();
       }
     });
 
     // Hide welcome bubble after 5 seconds
     setTimeout(() => {
-      welcomeBubble.classList.add('cr-hidden');
+      welcomeBubble.classList.add("cr-hidden");
     }, 5000);
 
     // Watch for theme changes on the website
@@ -598,22 +1061,24 @@
     // Observe changes to the html element's class attribute
     themeObserver.observe(document.documentElement, {
       attributes: true,
-      attributeFilter: ['class'],
+      attributeFilter: ["class"],
     });
 
     // Also watch body element if it exists
     if (document.body) {
       themeObserver.observe(document.body, {
         attributes: true,
-        attributeFilter: ['class'],
+        attributeFilter: ["class"],
       });
     }
 
     // Re-inject styles on system theme change (fallback)
     if (window.matchMedia) {
-      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
-        injectStyles();
-      });
+      window
+        .matchMedia("(prefers-color-scheme: dark)")
+        .addEventListener("change", () => {
+          injectStyles();
+        });
     }
   };
 
@@ -626,8 +1091,8 @@
   };
 
   // Wait for DOM to be ready
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
   } else {
     init();
   }
