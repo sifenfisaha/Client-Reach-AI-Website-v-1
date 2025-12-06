@@ -138,6 +138,17 @@ export function ChatWidget() {
 
   const isLoading = status !== "ready";
 
+  // Check if assistant is currently streaming a response (has started typing)
+  // Hide loading indicator once assistant message content appears
+  const lastMessage = messages[messages.length - 1];
+  const isStreaming =
+    isLoading &&
+    lastMessage &&
+    lastMessage.role === "assistant" &&
+    lastMessage.parts?.some(
+      (part: any) => part.type === "text" && part.text && part.text.trim().length > 0
+    );
+
   const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
@@ -266,8 +277,8 @@ export function ChatWidget() {
               })
             )}
 
-            {/* Loading Indicator */}
-            {isLoading && (
+            {/* Loading Indicator - Only show when waiting for response, not when streaming */}
+            {isLoading && !isStreaming && (
               <div className="flex justify-start">
                 <div className="bg-gray-100 dark:bg-gray-800 rounded-2xl rounded-bl-md px-4 py-3">
                   <div className="flex gap-1.5">

@@ -13,11 +13,9 @@ declare global {
 }
 
 export const openCalendlyPopup = () => {
-  if (typeof window !== 'undefined' && window.Calendly) {
+  if (typeof window !== "undefined" && window.Calendly) {
     window.Calendly.initPopupWidget({
-      url: 'https://calendly.com/clientreachai/free-ai-discovery'
+      url: "https://calendly.com/clientreachai/free-ai-discovery",
     });
-  } else {
-    console.error('Calendly widget not loaded');
   }
 };

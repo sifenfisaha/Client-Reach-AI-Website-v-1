@@ -55,7 +55,7 @@ export const WeeklyInsiderForm = () => {
       ...prev,
       [id]: value,
     }));
-    
+
     // Clear field error when user starts typing
     if (fieldErrors[id as keyof typeof fieldErrors]) {
       setFieldErrors((prev) => {
@@ -66,7 +66,7 @@ export const WeeklyInsiderForm = () => {
     }
     // Clear general error
     if (error) setError(null);
-    
+
     // Re-validate if field was previously touched
     if (touched[id as keyof typeof touched]) {
       if (id === "name") {
@@ -87,7 +87,7 @@ export const WeeklyInsiderForm = () => {
 
   const handleBlur = (fieldId: string) => {
     setTouched((prev) => ({ ...prev, [fieldId]: true }));
-    
+
     if (fieldId === "name") {
       const validationError = validateName(formData.name);
       setFieldErrors((prev) => ({
@@ -119,7 +119,7 @@ export const WeeklyInsiderForm = () => {
   // Check online status
   useEffect(() => {
     const handleOnline = () => {
-      if (error && error.includes('offline')) {
+      if (error && error.includes("offline")) {
         setError(null);
       }
     };
@@ -130,12 +130,12 @@ export const WeeklyInsiderForm = () => {
       }
     };
 
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
 
     return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
     };
   }, [error, isSubmitting]);
 
@@ -143,7 +143,7 @@ export const WeeklyInsiderForm = () => {
     e.preventDefault();
 
     // Check if user is offline
-    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
       setError("You're offline. Please check your connection.");
       return;
     }
@@ -204,7 +204,7 @@ export const WeeklyInsiderForm = () => {
           phone: "",
         });
         setSubmitted(true);
-        
+
         // Track analytics (fire-and-forget)
         try {
           trackWeeklyInsiderSubscription(
@@ -214,15 +214,12 @@ export const WeeklyInsiderForm = () => {
           );
         } catch (analyticsError) {
           // Silently fail - analytics should never break functionality
-          if (process.env.NODE_ENV === 'development') {
-            console.warn('Analytics tracking failed:', analyticsError);
-          }
         }
-        
+
         // Apply rate limiting
         setIsRateLimited(true);
         setRateLimitCountdown(3);
-        
+
         // Reset after 3 seconds
         setTimeout(() => {
           setIsRateLimited(false);
@@ -232,41 +229,44 @@ export const WeeklyInsiderForm = () => {
         // Handle different error scenarios
         if (result.code === "DUPLICATE_EMAIL") {
           setError("This email is already subscribed!");
-        } else if (result.code === 'TIMEOUT') {
+        } else if (result.code === "TIMEOUT") {
           setError("Request timed out. Please try again.");
-        } else if (result.code === 'RLS_ERROR') {
-          setError("Permission denied. Please contact support if this persists.");
-        } else if (result.code === 'SERVICE_UNAVAILABLE') {
-          setError("Service is temporarily unavailable. Please try again later.");
-        } else if (result.code === 'DATABASE_ERROR' || result.error?.toLowerCase().includes('network') || result.error?.toLowerCase().includes('connection')) {
+        } else if (result.code === "RLS_ERROR") {
+          setError(
+            "Permission denied. Please contact support if this persists."
+          );
+        } else if (result.code === "SERVICE_UNAVAILABLE") {
+          setError(
+            "Service is temporarily unavailable. Please try again later."
+          );
+        } else if (
+          result.code === "DATABASE_ERROR" ||
+          result.error?.toLowerCase().includes("network") ||
+          result.error?.toLowerCase().includes("connection")
+        ) {
           setError("Connection failed. Please try again.");
         } else {
           setError(result.error || "Something went wrong. Please try again.");
         }
-        
-        // Log error in development only
-        if (process.env.NODE_ENV === 'development') {
-          console.error("Weekly Insider subscription error:", result);
-        }
       }
     } catch (err) {
       // Handle unexpected errors
-      const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
-      
+      const errorMessage =
+        err instanceof Error ? err.message : "An unexpected error occurred";
+
       // Check for network/offline errors
-      if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      if (typeof navigator !== "undefined" && !navigator.onLine) {
         setError("You're offline. Please check your connection.");
-      } else if (errorMessage.toLowerCase().includes('network') || errorMessage.toLowerCase().includes('fetch') || errorMessage.toLowerCase().includes('connection')) {
-        setError('Connection failed. Please try again.');
-      } else if (errorMessage.toLowerCase().includes('timeout')) {
-        setError('Request timed out. Please try again.');
+      } else if (
+        errorMessage.toLowerCase().includes("network") ||
+        errorMessage.toLowerCase().includes("fetch") ||
+        errorMessage.toLowerCase().includes("connection")
+      ) {
+        setError("Connection failed. Please try again.");
+      } else if (errorMessage.toLowerCase().includes("timeout")) {
+        setError("Request timed out. Please try again.");
       } else {
         setError("An unexpected error occurred. Please try again later.");
-      }
-      
-      // Log error in development only
-      if (process.env.NODE_ENV === 'development') {
-        console.error("Weekly Insider subscription error:", err);
       }
     } finally {
       setIsSubmitting(false);
@@ -293,9 +293,9 @@ export const WeeklyInsiderForm = () => {
               Get the Weekly Insider
             </h2>
             <p className="text-gray-500 dark:text-gray-400 max-w-2xl mx-auto">
-              Join thousands of medical professionals growing their practice with
-              AI. Get exclusive tips, strategies, and updates delivered to your
-              inbox.
+              Join thousands of medical professionals growing their practice
+              with AI. Get exclusive tips, strategies, and updates delivered to
+              your inbox.
             </p>
           </motion.div>
         </div>
@@ -352,7 +352,11 @@ export const WeeklyInsiderForm = () => {
                     fieldErrors.name
                       ? "border-red-300 dark:border-red-700 focus:ring-2 focus:ring-red-500"
                       : "border-gray-200 dark:border-gray-700 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"
-                  } ${isSubmitting || isRateLimited ? 'opacity-60 cursor-not-allowed' : ''}`}
+                  } ${
+                    isSubmitting || isRateLimited
+                      ? "opacity-60 cursor-not-allowed"
+                      : ""
+                  }`}
                 />
                 <AnimatePresence>
                   {fieldErrors.name && (
@@ -387,7 +391,9 @@ export const WeeklyInsiderForm = () => {
                   disabled={isSubmitting || isRateLimited}
                   placeholder="Acme Clinic"
                   className={`w-full px-4 py-3 rounded-xl bg-white dark:bg-dark-card border border-gray-200 dark:border-gray-700 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 outline-none transition-all duration-300 text-gray-900 dark:text-white placeholder:text-gray-400 ${
-                    isSubmitting || isRateLimited ? 'opacity-60 cursor-not-allowed' : ''
+                    isSubmitting || isRateLimited
+                      ? "opacity-60 cursor-not-allowed"
+                      : ""
                   }`}
                 />
               </div>
@@ -407,14 +413,20 @@ export const WeeklyInsiderForm = () => {
                   onChange={handleInputChange}
                   onBlur={() => handleBlur("email")}
                   aria-invalid={fieldErrors.email ? "true" : "false"}
-                  aria-describedby={fieldErrors.email ? "email-error" : undefined}
+                  aria-describedby={
+                    fieldErrors.email ? "email-error" : undefined
+                  }
                   disabled={isSubmitting || isRateLimited}
                   placeholder="john@example.com"
                   className={`w-full px-4 py-3 rounded-xl bg-white dark:bg-dark-card border transition-all duration-300 text-gray-900 dark:text-white placeholder:text-gray-400 outline-none ${
                     fieldErrors.email
                       ? "border-red-300 dark:border-red-700 focus:ring-2 focus:ring-red-500"
                       : "border-gray-200 dark:border-gray-700 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"
-                  } ${isSubmitting || isRateLimited ? 'opacity-60 cursor-not-allowed' : ''}`}
+                  } ${
+                    isSubmitting || isRateLimited
+                      ? "opacity-60 cursor-not-allowed"
+                      : ""
+                  }`}
                 />
                 <AnimatePresence>
                   {fieldErrors.email && (
@@ -449,7 +461,9 @@ export const WeeklyInsiderForm = () => {
                   disabled={isSubmitting || isRateLimited}
                   placeholder="+1 (555) 000-0000"
                   className={`w-full px-4 py-3 rounded-xl bg-white dark:bg-dark-card border border-gray-200 dark:border-gray-700 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 outline-none transition-all duration-300 text-gray-900 dark:text-white placeholder:text-gray-400 ${
-                    isSubmitting || isRateLimited ? 'opacity-60 cursor-not-allowed' : ''
+                    isSubmitting || isRateLimited
+                      ? "opacity-60 cursor-not-allowed"
+                      : ""
                   }`}
                 />
               </div>
@@ -498,8 +512,8 @@ export const WeeklyInsiderForm = () => {
                   By checking this box, I consent to receive marketing and
                   promotional messages, including special offers, discounts, new
                   product updates among others. Message frequency may vary.
-                  Message & Data rates may apply. Reply HELP for help or STOP
-                  to opt-out.
+                  Message & Data rates may apply. Reply HELP for help or STOP to
+                  opt-out.
                 </span>
               </label>
             </div>
