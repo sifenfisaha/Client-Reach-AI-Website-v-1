@@ -26,6 +26,30 @@ export default function RootLayout({
           rel="stylesheet"
         />
         <link rel="icon" href="/favicon.ico" /> {/* <--- This works too */}
+        {/* Theme initialization script - prevents flash of wrong theme */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                function getInitialTheme() {
+                  const savedTheme = localStorage.getItem('theme');
+                  if (savedTheme === 'light' || savedTheme === 'dark') {
+                    return savedTheme;
+                  }
+                  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                }
+                const theme = getInitialTheme();
+                const root = document.documentElement;
+                root.classList.remove('light', 'dark');
+                if (theme === 'dark') {
+                  root.classList.add('dark');
+                } else {
+                  root.classList.add('light');
+                }
+              })();
+            `,
+          }}
+        />
         {/* Calendly Widget */}
         <link
           href="https://assets.calendly.com/assets/external/widget.css"
