@@ -270,38 +270,13 @@ Remember: Sound like a helpful consultant having a conversation and you are help
 Be genuine, be helpful, be human.`;
 
 export async function POST(req: NextRequest) {
-  const startTime = Date.now();
-  console.log("\n========== NEW CHAT REQUEST ==========");
-  console.log("Time:", new Date().toISOString());
-
   try {
-    // Check API key first - try multiple possible env var names
     const apiKey =
       process.env.OPENAI_API_KEY ||
       process.env.NEXT_PUBLIC_OPENAI_API_KEY ||
       process.env.OPENAI_KEY;
 
-    // Debug: Log all env vars that start with OPENAI
-    const openaiEnvVars = Object.keys(process.env)
-      .filter((key) => key.includes("OPENAI"))
-      .reduce((obj, key) => {
-        obj[key] = process.env[key]
-          ? `${process.env[key]?.substring(0, 10)}...`
-          : "undefined";
-        return obj;
-      }, {} as Record<string, string>);
-
-    console.log("🔍 OpenAI-related env vars:", openaiEnvVars);
-
     if (!apiKey) {
-      console.error("❌ OPENAI_API_KEY is not set!");
-      console.error(
-        "❌ Available env vars:",
-        Object.keys(process.env).filter((k) => k.includes("OPENAI"))
-      );
-      console.error("❌ Current working directory:", process.cwd());
-      console.error("❌ NODE_ENV:", process.env.NODE_ENV);
-
       return new Response(
         JSON.stringify({
           error:
@@ -315,18 +290,8 @@ export async function POST(req: NextRequest) {
         { status: 500, headers: { "Content-Type": "application/json" } }
       );
     }
-    console.log("✅ API Key present:", apiKey.substring(0, 10) + "...");
 
-    // Parse request body
-    console.log("📝 Parsing request body...");
     const body = await req.json();
-
-    // ADD DETAILED LOGGING
-    console.log("🔍 Raw body:", JSON.stringify(body, null, 2));
-    console.log("🔍 body.messages:", body.messages);
-    console.log("🔍 body.message:", body.message);
-    console.log("🔍 body type:", typeof body);
-    console.log("🔍 body is array:", Array.isArray(body));
 
     // Extract messages - handle multiple formats
     let messages = body.messages;
@@ -343,7 +308,6 @@ export async function POST(req: NextRequest) {
 
     // Validate messages array
     if (!messages) {
-      console.error("❌ Messages is undefined");
       return new Response(
         JSON.stringify({
           error: "Invalid request format. 'messages' array is required.",
@@ -355,7 +319,6 @@ export async function POST(req: NextRequest) {
     }
 
     if (!Array.isArray(messages)) {
-      console.error("❌ Messages is not an array:", typeof messages, messages);
       return new Response(
         JSON.stringify({
           error: "Invalid messages format. Expected an array.",
@@ -366,7 +329,6 @@ export async function POST(req: NextRequest) {
     }
 
     if (messages.length === 0) {
-      console.error("❌ Messages array is empty");
       return new Response(
         JSON.stringify({ error: "Messages array cannot be empty" }),
         { status: 400, headers: { "Content-Type": "application/json" } }
@@ -375,7 +337,6 @@ export async function POST(req: NextRequest) {
 
     // Validate messages array structure
     if (!Array.isArray(messages) || messages.length === 0) {
-      console.error("❌ Invalid messages array");
       return new Response(
         JSON.stringify({
           error: "Messages must be a non-empty array",
@@ -384,17 +345,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    console.log("✅ Messages array validated:", messages.length, "messages");
-    console.log("✅ Messages structure:", JSON.stringify(messages, null, 2));
-
     // Convert UI messages to model messages for AI SDK v5
-    // This handles the parts array format automatically
     let modelMessages;
     try {
       modelMessages = convertToModelMessages(messages);
-      console.log("✅ Converted to model messages:", modelMessages.length);
     } catch (error: any) {
-      console.error("❌ Error converting messages:", error);
       return new Response(
         JSON.stringify({
           error: "Failed to convert messages format",
@@ -451,11 +406,6 @@ ${
 - Use information from previous messages to personalize your response`;
 
     // Stream the response using Vercel AI SDK
-    console.log("🤖 Calling OpenAI API...");
-    console.log("🤖 Assistant message number:", nextMessageNumber);
-    console.log("🤖 Should show CTA:", shouldShowCTA);
-    console.log("🤖 Messages being sent to streamText:", modelMessages.length);
-
     const result = await streamText({
       model: openai("gpt-4o-mini"),
       system: dynamicSystemPrompt,
@@ -463,25 +413,14 @@ ${
       temperature: 0.7,
     });
 
-    console.log("✅ OpenAI response initiated");
-    console.log(`⏱️ Total time: ${Date.now() - startTime}ms`);
-    console.log("========================================\n");
-
     // Return streaming response in UI message format for @ai-sdk/react
     return result.toUIMessageStreamResponse();
   } catch (error: any) {
-    console.error("\n========== CHAT API ERROR ==========");
-    console.error("Time:", new Date().toISOString());
-    console.error("Error Type:", error?.constructor?.name || "Unknown");
-    console.error("Error Message:", error?.message || "No message");
-    console.error("Error Stack:", error?.stack || "No stack trace");
-
     // Check for specific error types
     if (
       error?.message?.includes("API key") ||
       error?.message?.includes("authentication")
     ) {
-      console.error("🔑 API Key Error detected");
       return new Response(
         JSON.stringify({
           error:
@@ -496,7 +435,6 @@ ${
       error?.message?.includes("rate limit") ||
       error?.message?.includes("quota")
     ) {
-      console.error("⏱️ Rate Limit Error detected");
       return new Response(
         JSON.stringify({
           error: "OpenAI API rate limit exceeded. Please try again later.",
@@ -505,9 +443,6 @@ ${
         { status: 429, headers: { "Content-Type": "application/json" } }
       );
     }
-
-    console.error("❌ Unexpected error occurred");
-    console.error("========================================\n");
 
     return new Response(
       JSON.stringify({
