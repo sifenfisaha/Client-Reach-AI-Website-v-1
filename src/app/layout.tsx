@@ -1,8 +1,8 @@
 import React from "react";
 import type { Metadata } from "next";
-import Script from "next/script";
 import "./globals.css";
 import { ThemeProvider } from "@/contexts/theme-context";
+import { ChatWidget } from "@/components/chat/chat-widget";
 
 export const metadata: Metadata = {
   title: "ClientReach.ai - AI Workforce for Clinics",
@@ -27,21 +27,22 @@ export default function RootLayout({
         />
         <link rel="icon" href="/favicon.ico" /> {/* <--- This works too */}
         {/* Calendly Widget */}
-        <link href="https://assets.calendly.com/assets/external/widget.css" rel="stylesheet" />
-        <script src="https://assets.calendly.com/assets/external/widget.js" type="text/javascript" async></script>
+        <link
+          href="https://assets.calendly.com/assets/external/widget.css"
+          rel="stylesheet"
+        />
+        <script
+          src="https://assets.calendly.com/assets/external/widget.js"
+          type="text/javascript"
+          async
+        ></script>
       </head>
       <body className="bg-white dark:bg-dark-bg text-slate-900 dark:text-slate-100 transition-colors duration-300 antialiased selection:bg-brand-500 selection:text-white">
-        <ThemeProvider>{children}</ThemeProvider>
-
-        {/* Chat Widget */}
-        <Script
-          src="/chat-widget.js"
-          strategy="lazyOnload"
-          data-name="Reach"
-          data-primary="#14A3F6"
-          data-welcome="👋 Have any questions?"
-          data-endpoint="/api/chat"
-        />
+        <ThemeProvider>
+          {children}
+          {/* Chat Widget */}
+          <ChatWidget />
+        </ThemeProvider>
       </body>
     </html>
   );
