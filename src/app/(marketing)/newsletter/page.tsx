@@ -1,21 +1,200 @@
 "use client";
 
-import { useState } from 'react';
-import { Mail, ArrowRight, CheckCircle2, Loader2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Mail, ArrowRight, CheckCircle2, Loader2, AlertCircle } from 'lucide-react';
 import { FadeIn } from '@/components/ui/fade-in';
+import { subscribeToNewsletter } from '@/lib/supabase/services';
+import { trackNewsletterSubscription } from '@/lib/analytics';
 
 export default function NewsletterPage() {
   const [email, setEmail] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [touched, setTouched] = useState(false);
+  const [isRateLimited, setIsRateLimited] = useState(false);
+  const [rateLimitCountdown, setRateLimitCountdown] = useState(0);
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  const validateEmail = (emailValue: string): string | null => {
+    if (!emailValue.trim()) {
+      return "Email is required";
+    }
+    if (!emailRegex.test(emailValue.trim())) {
+      return "Please enter a valid email";
+    }
+    return null;
+  };
+
+  const handleEmailBlur = () => {
+    setTouched(true);
+    const validationError = validateEmail(email);
+    setEmailError(validationError);
+  };
+
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newEmail = e.target.value;
+    setEmail(newEmail);
+    // Clear errors when user starts typing
+    if (emailError) {
+      setEmailError(null);
+    }
+    if (error) {
+      setError(null);
+    }
+    // Re-validate if field was previously touched
+    if (touched) {
+      const validationError = validateEmail(newEmail);
+      setEmailError(validationError);
+    }
+  };
+
+  // Rate limiting countdown effect with cleanup
+  useEffect(() => {
+    if (rateLimitCountdown > 0) {
+      const timer = setTimeout(() => {
+        setRateLimitCountdown((prev) => prev - 1);
+      }, 1000);
+      return () => clearTimeout(timer);
+    } else if (rateLimitCountdown === 0 && isRateLimited) {
+      setIsRateLimited(false);
+    }
+    return undefined;
+  }, [rateLimitCountdown, isRateLimited]);
+
+  // Check online status
+  useEffect(() => {
+    const handleOnline = () => {
+      if (error && error.includes('offline')) {
+        setError(null);
+      }
+    };
+    const handleOffline = () => {
+      if (isSubmitting) {
+        setError("You're offline. Please check your connection.");
+        setIsSubmitting(false);
+      }
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, [error, isSubmitting]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    setLoading(false);
-    setSubmitted(true);
+    
+    // Check if user is offline
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      setError("You're offline. Please check your connection.");
+      return;
+    }
+    
+    // Check rate limit
+    if (isRateLimited) {
+      return;
+    }
+    
+    // Mark as touched
+    setTouched(true);
+    
+    // Clear previous errors
+    setError(null);
+    
+    // Validate email format using regex
+    const validationError = validateEmail(email);
+    if (validationError) {
+      setEmailError(validationError);
+      return;
+    }
+
+    // Prevent duplicate submissions
+    if (isSubmitting) {
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      // Call the subscription service
+      const result = await subscribeToNewsletter(email.trim(), {
+        source: 'newsletter-page',
+      });
+
+      if (result.success) {
+        // Success: Clear email and show success animation
+        setEmail("");
+        setSubmitted(true);
+        
+        // Track analytics (fire-and-forget)
+        try {
+          trackNewsletterSubscription('newsletter-page');
+        } catch (analyticsError) {
+          // Silently fail - analytics should never break functionality
+          if (process.env.NODE_ENV === 'development') {
+            console.warn('Analytics tracking failed:', analyticsError);
+          }
+        }
+        
+        // Apply rate limiting
+        setIsRateLimited(true);
+        setRateLimitCountdown(3);
+        
+        // Reset after 3 seconds
+        setTimeout(() => {
+          setIsRateLimited(false);
+          setRateLimitCountdown(0);
+        }, 3000);
+      } else {
+        // Handle different error scenarios
+        if (result.code === 'DUPLICATE_EMAIL') {
+          setError("This email is already subscribed!");
+        } else if (result.code === 'TIMEOUT') {
+          setError("Request timed out. Please try again.");
+        } else if (result.code === 'RLS_ERROR') {
+          setError("Permission denied. Please contact support if this persists.");
+        } else if (result.code === 'SERVICE_UNAVAILABLE') {
+          setError("Service is temporarily unavailable. Please try again later.");
+        } else if (result.code === 'DATABASE_ERROR' || result.error?.toLowerCase().includes('network') || result.error?.toLowerCase().includes('connection')) {
+          setError("Connection failed. Please try again.");
+        } else {
+          setError(result.error || 'Something went wrong. Please try again.');
+        }
+        
+        // Log error in development only
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Newsletter subscription error:', result);
+        }
+      }
+    } catch (err) {
+      // Handle unexpected errors
+      const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
+      
+      // Check for network/offline errors
+      if (typeof navigator !== 'undefined' && !navigator.onLine) {
+        setError("You're offline. Please check your connection.");
+      } else if (errorMessage.toLowerCase().includes('network') || errorMessage.toLowerCase().includes('fetch') || errorMessage.toLowerCase().includes('connection')) {
+        setError('Connection failed. Please try again.');
+      } else if (errorMessage.toLowerCase().includes('timeout')) {
+        setError('Request timed out. Please try again.');
+      } else {
+        setError('An unexpected error occurred. Please try again later.');
+      }
+      
+      // Log error in development only
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Newsletter subscription error:', err);
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -52,7 +231,7 @@ export default function NewsletterPage() {
               <form onSubmit={handleSubmit} className="space-y-6 relative z-10">
                 <div>
                   <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Email Address
+                    Email Address <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
                     <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
@@ -61,26 +240,65 @@ export default function NewsletterPage() {
                       id="email"
                       required
                       value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="w-full pl-12 pr-4 py-4 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-brand-500 outline-none transition-all text-lg"
+                      onChange={handleEmailChange}
+                      onBlur={handleEmailBlur}
+                      aria-invalid={emailError ? "true" : "false"}
+                      aria-describedby={emailError ? "email-error" : undefined}
+                      className={`w-full pl-12 pr-4 py-4 rounded-xl bg-gray-50 dark:bg-gray-800 border transition-all duration-300 text-lg ${
+                        emailError || error
+                          ? 'border-red-300 dark:border-red-700 focus:ring-2 focus:ring-red-500'
+                          : 'border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-brand-500'
+                      } ${isSubmitting || isRateLimited ? 'opacity-60 cursor-not-allowed' : ''} outline-none`}
                       placeholder="doctor@clinic.com"
+                      disabled={isSubmitting || isRateLimited}
                     />
                   </div>
+                  <AnimatePresence>
+                    {emailError && (
+                      <motion.div
+                        id="email-error"
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        transition={{ duration: 0.2 }}
+                        className="mt-2 flex items-center gap-2 text-red-600 dark:text-red-400 text-sm"
+                        role="alert"
+                      >
+                        <AlertCircle size={16} />
+                        <span>{emailError}</span>
+                      </motion.div>
+                    )}
+                    {error && !emailError && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        transition={{ duration: 0.2 }}
+                        className="mt-2 flex items-center gap-2 text-red-600 dark:text-red-400 text-sm"
+                        role="alert"
+                      >
+                        <AlertCircle size={16} />
+                        <span>{error}</span>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
                 <button
                   type="submit"
-                  disabled={loading}
-                  className="w-full py-4 bg-brand-500 hover:bg-brand-600 text-white font-bold text-lg rounded-xl transition-all shadow-lg shadow-brand-500/20 flex items-center justify-center gap-2 group"
+                  disabled={isSubmitting || isRateLimited}
+                  className="w-full py-4 bg-brand-500 hover:bg-brand-600 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-bold text-lg rounded-xl transition-all duration-300 shadow-lg shadow-brand-500/20 flex items-center justify-center gap-2 group"
                 >
-                  {loading ? (
+                  {isSubmitting ? (
                     <>
                       <Loader2 size={24} className="animate-spin" />
-                      <span>Subscribing...</span>
+                      <span>Submitting...</span>
                     </>
+                  ) : isRateLimited ? (
+                    <span>Form submitted successfully!</span>
                   ) : (
                     <>
                       <span>Subscribe Now</span>
-                      <ArrowRight size={24} className="group-hover:translate-x-1 transition-transform" />
+                      <ArrowRight size={24} className="group-hover:translate-x-1 transition-transform duration-300" />
                     </>
                   )}
                 </button>
