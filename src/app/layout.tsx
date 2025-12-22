@@ -88,12 +88,18 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      { url: "/favicon.png", sizes: "any" },
-      { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
-      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+      {
+        url: "/croped circle christmessssss.png",
+        sizes: "any",
+        type: "image/png",
+      },
     ],
     apple: [
-      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+      {
+        url: "/croped circle christmessssss.png",
+        sizes: "180x180",
+        type: "image/png",
+      },
     ],
   },
   manifest: "/manifest.json",
@@ -122,7 +128,11 @@ export default function RootLayout({
         />
         <meta name="theme-color" content="#6366f1" />
         <meta name="color-scheme" content="light dark" />
-        <link rel="icon" href="/favicon.ico" />
+        <link
+          rel="icon"
+          href="/croped circle christmessssss.png"
+          type="image/png"
+        />
         {/* Theme initialization script - prevents flash of wrong theme */}
         <script
           dangerouslySetInnerHTML={{
