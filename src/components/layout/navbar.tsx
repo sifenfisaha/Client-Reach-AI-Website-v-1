@@ -30,11 +30,7 @@ export const Navbar: React.FC = () => {
           className="flex items-center space-x-2 rtl:space-x-reverse"
         >
           <div className="flex items-center gap-3">
-            <img
-              src="/croped circle christmessssss.png"
-              alt="ClientReach.ai Logo"
-              className="h-10 w-auto object-contain"
-            />
+            <img src="/clientreachai.logo.png" alt="ClientReach.ai Logo" className="h-10 w-auto object-contain" />
             <div className="flex flex-col leading-none ml-[-10px]">
               <span className="text-xl font-bold text-gray-900 dark:text-white">
                 Client
