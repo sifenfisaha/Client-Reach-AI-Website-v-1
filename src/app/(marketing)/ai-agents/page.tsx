@@ -18,13 +18,14 @@ import {
   StaggerContainer,
   StaggerItem,
 } from "@/components/ui/stagger-container";
-import { requestCall } from "@/lib/supabase/services";
 
 export default function AiAgentsPage() {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     phone: "",
+    company: "",
+    inquiry: "",
     consentMarketing: false,
     consentTransactional: false,
   });
@@ -35,11 +36,15 @@ export default function AiAgentsPage() {
     name?: string;
     email?: string;
     phone?: string;
+    company?: string;
+    inquiry?: string;
   }>({});
   const [touched, setTouched] = useState<{
     name?: boolean;
     email?: boolean;
     phone?: boolean;
+    company?: boolean;
+    inquiry?: boolean;
   }>({});
   const [isRateLimited, setIsRateLimited] = useState(false);
   const [rateLimitCountdown, setRateLimitCountdown] = useState(0);
@@ -72,6 +77,20 @@ export default function AiAgentsPage() {
     }
     if (phoneValue.trim().length < 10) {
       return "Phone number must be at least 10 characters";
+    }
+    return null;
+  };
+
+  const validateCompany = (companyValue: string): string | null => {
+    if (!companyValue.trim()) {
+      return "Company name is required";
+    }
+    return null;
+  };
+
+  const validateInquiry = (inquiryValue: string): string | null => {
+    if (!inquiryValue.trim()) {
+      return "Inquiry is required";
     }
     return null;
   };
@@ -114,6 +133,18 @@ export default function AiAgentsPage() {
           ...prev,
           phone: validationError || undefined,
         }));
+      } else if (name === "company") {
+        const validationError = validateCompany(value);
+        setFieldErrors((prev) => ({
+          ...prev,
+          company: validationError || undefined,
+        }));
+      } else if (name === "inquiry") {
+        const validationError = validateInquiry(value);
+        setFieldErrors((prev) => ({
+          ...prev,
+          inquiry: validationError || undefined,
+        }));
       }
     }
   };
@@ -138,6 +169,18 @@ export default function AiAgentsPage() {
       setFieldErrors((prev) => ({
         ...prev,
         phone: validationError || undefined,
+      }));
+    } else if (fieldName === "company") {
+      const validationError = validateCompany(formData.company);
+      setFieldErrors((prev) => ({
+        ...prev,
+        company: validationError || undefined,
+      }));
+    } else if (fieldName === "inquiry") {
+      const validationError = validateInquiry(formData.inquiry);
+      setFieldErrors((prev) => ({
+        ...prev,
+        inquiry: validationError || undefined,
       }));
     }
   };
@@ -193,7 +236,13 @@ export default function AiAgentsPage() {
     }
 
     // Mark all fields as touched
-    setTouched({ name: true, email: true, phone: true });
+    setTouched({
+      name: true,
+      email: true,
+      phone: true,
+      company: true,
+      inquiry: true,
+    });
 
     // Clear previous errors
     setError(null);
@@ -202,12 +251,16 @@ export default function AiAgentsPage() {
     const nameError = validateName(formData.name);
     const emailError = validateEmail(formData.email);
     const phoneError = validatePhone(formData.phone);
+    const companyError = validateCompany(formData.company);
+    const inquiryError = validateInquiry(formData.inquiry);
 
-    if (nameError || emailError || phoneError) {
+    if (nameError || emailError || phoneError || companyError || inquiryError) {
       setFieldErrors({
         name: nameError || undefined,
         email: emailError || undefined,
         phone: phoneError || undefined,
+        company: companyError || undefined,
+        inquiry: inquiryError || undefined,
       });
       return;
     }
@@ -221,23 +274,33 @@ export default function AiAgentsPage() {
     setIsSubmitting(true);
 
     try {
-      const result = await requestCall(
+      const response = await fetch(
+        "https://clientreachai.app.n8n.cloud/webhook-test/581da088-fd0d-4262-b540-2f1a9c08920c",
         {
-          name: formData.name.trim(),
-          email: formData.email.trim(),
-          phone: formData.phone.trim(),
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name: formData.name.trim(),
+            email: formData.email.trim(),
+            phone: formData.phone.trim(),
+            company: formData.company.trim(),
+            inquiry: formData.inquiry.trim(),
+            consentMarketing: formData.consentMarketing,
+            consentTransactional: formData.consentTransactional,
+          }),
         },
-        {
-          source: "call-request-form",
-        }
       );
 
-      if (result.success) {
+      if (response.ok) {
         // Clear form
         setFormData({
           name: "",
           email: "",
           phone: "",
+          company: "",
+          inquiry: "",
           consentMarketing: false,
           consentTransactional: false,
         });
@@ -255,26 +318,7 @@ export default function AiAgentsPage() {
           setRateLimitCountdown(0);
         }, 3000);
       } else {
-        // Handle different error scenarios
-        if (result.code === "DUPLICATE_EMAIL") {
-          setError("A call request with this email already exists.");
-        } else if (result.code === "TIMEOUT") {
-          setError("Request timed out. Please try again.");
-        } else if (result.code === "RLS_ERROR") {
-          setError(
-            "Permission denied. Please contact support if this persists."
-          );
-        } else if (result.code === "SERVICE_UNAVAILABLE") {
-          setError("Service is temporarily unavailable. Please try again later.");
-        } else if (
-          result.code === "DATABASE_ERROR" ||
-          result.error?.toLowerCase().includes("network") ||
-          result.error?.toLowerCase().includes("connection")
-        ) {
-          setError("Connection failed. Please try again.");
-        } else {
-          setError(result.error || "Something went wrong. Please try again.");
-        }
+        setError("Something went wrong. Please try again.");
       }
     } catch (err) {
       // Handle unexpected errors
@@ -574,6 +618,103 @@ export default function AiAgentsPage() {
                           >
                             <AlertCircle size={14} />
                             {fieldErrors.email}
+                          </motion.p>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                    <div>
+                      <label
+                        htmlFor="company"
+                        className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                      >
+                        Company Name <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        id="company"
+                        name="company"
+                        value={formData.company}
+                        onChange={handleInputChange}
+                        onBlur={() => handleBlur("company")}
+                        aria-invalid={fieldErrors.company ? "true" : "false"}
+                        aria-describedby={
+                          fieldErrors.company ? "company-error" : undefined
+                        }
+                        disabled={isSubmitting || isRateLimited}
+                        className={`w-full px-4 py-3 rounded-lg bg-gray-50 dark:bg-gray-800 border outline-none transition-all ${
+                          fieldErrors.company
+                            ? "border-red-300 dark:border-red-700 focus:ring-2 focus:ring-red-500"
+                            : "border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-brand-500"
+                        } ${
+                          isSubmitting || isRateLimited
+                            ? "opacity-60 cursor-not-allowed"
+                            : ""
+                        }`}
+                        placeholder="Clinic Name"
+                      />
+                      <AnimatePresence>
+                        {fieldErrors.company && (
+                          <motion.p
+                            id="company-error"
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: "auto" }}
+                            exit={{ opacity: 0, height: 0 }}
+                            className="mt-1 text-sm text-red-600 dark:text-red-400 flex items-center gap-1"
+                          >
+                            <AlertCircle size={14} />
+                            {fieldErrors.company}
+                          </motion.p>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                    <div>
+                      <label
+                        htmlFor="inquiry"
+                        className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                      >
+                        Initial Inquiry/Interest{" "}
+                        <span className="text-red-500">*</span>
+                      </label>
+                      <textarea
+                        id="inquiry"
+                        name="inquiry"
+                        value={formData.inquiry}
+                        onChange={(
+                          e: React.ChangeEvent<HTMLTextAreaElement>,
+                        ) => {
+                          handleInputChange(
+                            e as unknown as React.ChangeEvent<HTMLInputElement>,
+                          );
+                        }}
+                        onBlur={() => handleBlur("inquiry")}
+                        aria-invalid={fieldErrors.inquiry ? "true" : "false"}
+                        aria-describedby={
+                          fieldErrors.inquiry ? "inquiry-error" : undefined
+                        }
+                        disabled={isSubmitting || isRateLimited}
+                        rows={4}
+                        className={`w-full px-4 py-3 rounded-lg bg-gray-50 dark:bg-gray-800 border outline-none transition-all ${
+                          fieldErrors.inquiry
+                            ? "border-red-300 dark:border-red-700 focus:ring-2 focus:ring-red-500"
+                            : "border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-brand-500"
+                        } ${
+                          isSubmitting || isRateLimited
+                            ? "opacity-60 cursor-not-allowed"
+                            : ""
+                        }`}
+                        placeholder="I'm interested in..."
+                      />
+                      <AnimatePresence>
+                        {fieldErrors.inquiry && (
+                          <motion.p
+                            id="inquiry-error"
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: "auto" }}
+                            exit={{ opacity: 0, height: 0 }}
+                            className="mt-1 text-sm text-red-600 dark:text-red-400 flex items-center gap-1"
+                          >
+                            <AlertCircle size={14} />
+                            {fieldErrors.inquiry}
                           </motion.p>
                         )}
                       </AnimatePresence>
