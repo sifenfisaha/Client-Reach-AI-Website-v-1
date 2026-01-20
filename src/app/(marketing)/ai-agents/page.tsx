@@ -275,7 +275,7 @@ export default function AiAgentsPage() {
 
     try {
       const response = await fetch(
-        "https://clientreachai.app.n8n.cloud/webhook-test/581da088-fd0d-4262-b540-2f1a9c08920c",
+        process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL || "",
         {
           method: "POST",
           headers: {
